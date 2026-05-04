@@ -21,7 +21,7 @@ export function initI18n(ns: string[] = ['common']) {
         caches: ['localStorage'],
       },
       backend: {
-        loadPath: '/locales/{{lng}}/{{ns}}.json',
+        loadPath: `${import.meta.env.BASE_URL}locales/{{lng}}/{{ns}}.json`,
       },
     })
 

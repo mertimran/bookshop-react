@@ -78,12 +78,19 @@ export interface ODataResponse<T> {
   '@odata.count'?: number
 }
 
+import { getAuthHeader } from '../auth'
+
 const BASE_CATALOG = '/api/catalog'
 const BASE_ADMIN = '/api/admin'
 
 async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
+  const auth = getAuthHeader()
   const res = await fetch(url, {
-    headers: { 'Content-Type': 'application/json', ...init?.headers },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(auth ? { Authorization: auth } : {}),
+      ...init?.headers,
+    },
     ...init,
   })
   if (!res.ok) {
@@ -106,9 +113,13 @@ export const catalogApi = {
   getPublishers: () =>
     fetchJson<ODataResponse<Publisher>>(`${BASE_CATALOG}/Publishers`),
   createOrder: async (order: Partial<Order>) => {
+    const auth = getAuthHeader()
     const res = await fetch(`${BASE_CATALOG}/Orders`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(auth ? { Authorization: auth } : {}),
+      },
       body: JSON.stringify(order),
     })
     if (!res.ok) {
@@ -129,6 +140,11 @@ export const catalogApi = {
     fetchJson<ODataResponse<Order>>(`${BASE_CATALOG}/Orders${params ? '?' + params : ''}`),
   getReviews: (params = '') =>
     fetchJson<ODataResponse<Review>>(`${BASE_CATALOG}/Reviews${params ? '?' + params : ''}`),
+  addReview: (review: Pick<Review, 'book_ID' | 'reviewer' | 'rating' | 'title' | 'comment'>) =>
+    fetchJson<Review>(`${BASE_CATALOG}/Reviews`, {
+      method: 'POST',
+      body: JSON.stringify(review),
+    }),
 }
 
 export const adminApi = {
@@ -140,8 +156,7 @@ export const adminApi = {
     fetchJson<Book>(`${BASE_ADMIN}/Books`, { method: 'POST', body: JSON.stringify(book) }),
   updateBook: (id: string, book: Partial<Book>) =>
     fetchJson<Book>(`${BASE_ADMIN}/Books(${id})`, { method: 'PATCH', body: JSON.stringify(book) }),
-  deleteBook: (id: string) =>
-    fetch(`${BASE_ADMIN}/Books(${id})`, { method: 'DELETE' }),
+  deleteBook: (id: string) => fetchAuthed(`${BASE_ADMIN}/Books(${id})`, { method: 'DELETE' }),
 
   getOrders: (params = '') =>
     fetchJson<ODataResponse<Order>>(`${BASE_ADMIN}/Orders${params ? '?' + params : ''}`),
@@ -160,8 +175,7 @@ export const adminApi = {
     fetchJson<Author>(`${BASE_ADMIN}/Authors`, { method: 'POST', body: JSON.stringify(author) }),
   updateAuthor: (id: string, author: Partial<Author>) =>
     fetchJson<Author>(`${BASE_ADMIN}/Authors(${id})`, { method: 'PATCH', body: JSON.stringify(author) }),
-  deleteAuthor: (id: string) =>
-    fetch(`${BASE_ADMIN}/Authors(${id})`, { method: 'DELETE' }),
+  deleteAuthor: (id: string) => fetchAuthed(`${BASE_ADMIN}/Authors(${id})`, { method: 'DELETE' }),
 
   getGenres: () =>
     fetchJson<ODataResponse<Genre>>(`${BASE_ADMIN}/Genres`),
@@ -171,6 +185,13 @@ export const adminApi = {
     fetchJson<Publisher>(`${BASE_ADMIN}/Publishers`, { method: 'POST', body: JSON.stringify(pub) }),
   updatePublisher: (id: string, pub: Partial<Publisher>) =>
     fetchJson<Publisher>(`${BASE_ADMIN}/Publishers(${id})`, { method: 'PATCH', body: JSON.stringify(pub) }),
-  deletePublisher: (id: string) =>
-    fetch(`${BASE_ADMIN}/Publishers(${id})`, { method: 'DELETE' }),
+  deletePublisher: (id: string) => fetchAuthed(`${BASE_ADMIN}/Publishers(${id})`, { method: 'DELETE' }),
+}
+
+function fetchAuthed(url: string, init: RequestInit) {
+  const auth = getAuthHeader()
+  return fetch(url, {
+    ...init,
+    headers: { ...(auth ? { Authorization: auth } : {}), ...init.headers },
+  })
 }

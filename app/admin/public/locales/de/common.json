@@ -60,5 +60,12 @@
   "delivered": "Zugestellt",
   "cancelled": "Storniert",
   "publishedDate": "Veröffentlichungsdatum",
-  "coverImage": "Cover-Bild URL"
+  "coverImage": "Cover-Bild URL",
+  "email": "E-Mail",
+  "password": "Passwort",
+  "signIn": "Anmelden",
+  "signingIn": "Anmeldung läuft...",
+  "signOut": "Abmelden",
+  "fillAllFields": "Bitte füllen Sie alle Felder aus",
+  "adminSignInSubtitle": "Melden Sie sich an, um auf die Admin-Konsole zuzugreifen"
 }

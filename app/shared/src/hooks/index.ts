@@ -1,12 +1,32 @@
-import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useState, useMemo, useEffect, useSyncExternalStore } from 'react'
 import { lightTheme, darkTheme } from '../theme'
 import { isInsideSapShell, getSapThemeParams, buildSapMuiTheme } from '../theme/sap-theme'
 
+type Mode = 'light' | 'dark'
+
+const STORAGE_KEY = 'theme-mode'
+
+let currentMode: Mode = (() => {
+  if (typeof window === 'undefined') return 'light'
+  return (localStorage.getItem(STORAGE_KEY) as Mode) || 'light'
+})()
+
+const listeners = new Set<() => void>()
+const subscribe = (cb: () => void) => { listeners.add(cb); return () => { listeners.delete(cb) } }
+const getSnapshot = () => currentMode
+const getServerSnapshot = (): Mode => 'light'
+
+function setModeShared(next: Mode) {
+  if (next === currentMode) return
+  currentMode = next
+  if (typeof window !== 'undefined') localStorage.setItem(STORAGE_KEY, next)
+  listeners.forEach(l => l())
+}
+
+const toggleTheme = () => setModeShared(currentMode === 'light' ? 'dark' : 'light')
+
 export function useThemeMode() {
-  const [mode, setMode] = useState<'light' | 'dark'>(() => {
-    if (typeof window === 'undefined') return 'light'
-    return (localStorage.getItem('theme-mode') as 'light' | 'dark') || 'light'
-  })
+  const mode = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
 
   const [sapThemeParams, setSapThemeParams] = useState(() => getSapThemeParams())
 
@@ -33,14 +53,6 @@ export function useThemeMode() {
     if (sapThemeParams) return buildSapMuiTheme(sapThemeParams)
     return mode === 'dark' ? darkTheme : lightTheme
   }, [mode, sapThemeParams])
-
-  const toggleTheme = useCallback(() => {
-    setMode((prev) => {
-      const next = prev === 'light' ? 'dark' : 'light'
-      localStorage.setItem('theme-mode', next)
-      return next
-    })
-  }, [])
 
   return { theme, mode, toggleTheme, isShellManaged: !!sapThemeParams }
 }

@@ -36,6 +36,12 @@
   "cds": {
     "requires": {
       "app-front": true,
+      "auth": {
+        "kind": "mocked",
+        "users": {
+          "admin": { "password": "admin", "roles": ["admin"] }
+        }
+      },
       "[production]": {
         "auth": "xsuaa"
       }

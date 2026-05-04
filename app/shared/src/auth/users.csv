@@ -1,0 +1,3 @@
+email,password,name,role
+admin@bookshop.dev,admin123,Administrator,admin
+demo@bookshop.dev,demo123,Demo Customer,customer

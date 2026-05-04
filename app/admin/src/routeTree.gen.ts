@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as PublishersRouteImport } from './routes/publishers'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as GenresRouteImport } from './routes/genres'
 import { Route as AuthorsRouteImport } from './routes/authors'
 import { Route as IndexRouteImport } from './routes/index'
@@ -22,6 +23,11 @@ import { Route as BooksBookIdRouteImport } from './routes/books/$bookId'
 const PublishersRoute = PublishersRouteImport.update({
   id: '/publishers',
   path: '/publishers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GenresRoute = GenresRouteImport.update({
@@ -69,6 +75,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/authors': typeof AuthorsRoute
   '/genres': typeof GenresRoute
+  '/login': typeof LoginRoute
   '/publishers': typeof PublishersRoute
   '/books/$bookId': typeof BooksBookIdRoute
   '/books/new': typeof BooksNewRoute
@@ -80,6 +87,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/authors': typeof AuthorsRoute
   '/genres': typeof GenresRoute
+  '/login': typeof LoginRoute
   '/publishers': typeof PublishersRoute
   '/books/$bookId': typeof BooksBookIdRoute
   '/books/new': typeof BooksNewRoute
@@ -92,6 +100,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/authors': typeof AuthorsRoute
   '/genres': typeof GenresRoute
+  '/login': typeof LoginRoute
   '/publishers': typeof PublishersRoute
   '/books/$bookId': typeof BooksBookIdRoute
   '/books/new': typeof BooksNewRoute
@@ -105,6 +114,7 @@ export interface FileRouteTypes {
     | '/'
     | '/authors'
     | '/genres'
+    | '/login'
     | '/publishers'
     | '/books/$bookId'
     | '/books/new'
@@ -116,6 +126,7 @@ export interface FileRouteTypes {
     | '/'
     | '/authors'
     | '/genres'
+    | '/login'
     | '/publishers'
     | '/books/$bookId'
     | '/books/new'
@@ -127,6 +138,7 @@ export interface FileRouteTypes {
     | '/'
     | '/authors'
     | '/genres'
+    | '/login'
     | '/publishers'
     | '/books/$bookId'
     | '/books/new'
@@ -139,6 +151,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthorsRoute: typeof AuthorsRoute
   GenresRoute: typeof GenresRoute
+  LoginRoute: typeof LoginRoute
   PublishersRoute: typeof PublishersRoute
   BooksBookIdRoute: typeof BooksBookIdRoute
   BooksNewRoute: typeof BooksNewRoute
@@ -154,6 +167,13 @@ declare module '@tanstack/react-router' {
       path: '/publishers'
       fullPath: '/publishers'
       preLoaderRoute: typeof PublishersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/genres': {
@@ -219,6 +239,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthorsRoute: AuthorsRoute,
   GenresRoute: GenresRoute,
+  LoginRoute: LoginRoute,
   PublishersRoute: PublishersRoute,
   BooksBookIdRoute: BooksBookIdRoute,
   BooksNewRoute: BooksNewRoute,

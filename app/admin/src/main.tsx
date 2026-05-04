@@ -5,6 +5,7 @@ import { ThemeProvider } from '@mui/material/styles'
 import CssBaseline from '@mui/material/CssBaseline'
 import { initI18n } from '@bookshop/shared/i18n'
 import { useThemeMode } from '@bookshop/shared/hooks'
+import { AuthProvider } from '@bookshop/shared/auth'
 import { routeTree } from './routeTree.gen'
 
 initI18n(['common'])
@@ -24,7 +25,9 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <RouterProvider router={router} />
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
     </ThemeProvider>
   )
 }

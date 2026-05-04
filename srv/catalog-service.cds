@@ -23,7 +23,6 @@ service CatalogService {
   entity Orders as projection on db.Orders;
   entity OrderItems as projection on db.OrderItems;
 
-  @readonly
   entity Reviews as projection on db.Reviews;
 
   action submitOrder(orderID : UUID) returns Orders;

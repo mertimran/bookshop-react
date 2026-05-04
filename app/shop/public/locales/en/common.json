@@ -45,5 +45,17 @@
   "delivered": "Delivered",
   "cancelled": "Cancelled",
   "featuredBooks": "Featured Books",
-  "browseCollection": "Browse our collection of classic literature"
+  "browseCollection": "Browse our collection of classic literature",
+  "youMightAlsoLike": "You might also like",
+  "reviews": "Reviews",
+  "noReviews": "No reviews yet. Be the first to write one!",
+  "writeReview": "Write a review",
+  "yourName": "Your name",
+  "reviewTitle": "Title",
+  "yourComment": "Comment",
+  "submitReview": "Submit review",
+  "yourRating": "Your rating",
+  "signInToReview": "Sign in to write a review",
+  "signIn": "Sign in",
+  "noRatings": "No ratings yet"
 }

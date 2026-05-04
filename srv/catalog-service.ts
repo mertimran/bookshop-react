@@ -2,7 +2,7 @@ import cds from '@sap/cds'
 
 export default class CatalogService extends cds.ApplicationService {
   async init() {
-    const { Books, Orders, OrderItems } = this.entities
+    const { Books, Orders, OrderItems, Reviews } = this.entities
 
     this.before('CREATE', 'Orders', async (req) => {
       const order = req.data
@@ -37,9 +37,29 @@ export default class CatalogService extends cds.ApplicationService {
       return SELECT.one.from(Orders).where({ ID: orderID })
     })
 
-    this.after('READ', 'Books', (each: any) => {
-      if (each.stock !== undefined && each.stock < 1) {
-        each.title = `${each.title} — Out of Stock`
+    this.after('READ', 'Books', async (rows: any) => {
+      const list = Array.isArray(rows) ? rows : [rows]
+      const ids = list.map((r) => r.ID).filter(Boolean)
+      if (ids.length) {
+        const reviews: any[] = await SELECT.from(Reviews)
+          .columns('book_ID', 'rating')
+          .where({ book_ID: { in: ids } })
+        const grouped: Record<string, number[]> = {}
+        for (const r of reviews) {
+          const arr = grouped[r.book_ID] ?? (grouped[r.book_ID] = [])
+          if (typeof r.rating === 'number') arr.push(r.rating)
+        }
+        for (const row of list) {
+          const arr = grouped[row.ID] ?? []
+          row.rating = arr.length
+            ? Number((arr.reduce((s, n) => s + n, 0) / arr.length).toFixed(1))
+            : 0
+        }
+      }
+      for (const each of list) {
+        if (each.stock !== undefined && each.stock < 1) {
+          each.title = `${each.title} — Out of Stock`
+        }
       }
     })
 

@@ -60,5 +60,12 @@
   "delivered": "Delivered",
   "cancelled": "Cancelled",
   "publishedDate": "Published Date",
-  "coverImage": "Cover Image URL"
+  "coverImage": "Cover Image URL",
+  "email": "Email",
+  "password": "Password",
+  "signIn": "Sign In",
+  "signingIn": "Signing in...",
+  "signOut": "Sign Out",
+  "fillAllFields": "Please fill in all fields",
+  "adminSignInSubtitle": "Sign in to access the admin console"
 }
