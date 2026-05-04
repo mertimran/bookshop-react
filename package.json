@@ -1,0 +1,44 @@
+{
+  "name": "bookshop",
+  "version": "1.0.0",
+  "dependencies": {
+    "@sap/cds": "^9",
+    "@sap/xssec": "^4"
+  },
+  "devDependencies": {
+    "@cap-js/sqlite": "^2",
+    "@sap/cds-dk": "^9",
+    "@cap-js/cds-types": "^0.16.0",
+    "@types/node": "^24.0.0",
+    "tsx": "^4",
+    "typescript": "^6.0.0",
+    "@cap-js/cds-typer": ">=0.1",
+    "vite": "^8",
+    "@vitejs/plugin-react": "^6",
+    "@tanstack/router-plugin": "^1.167.29"
+  },
+  "scripts": {
+    "start": "cds-serve",
+    "dev:shop": "npm run dev --workspace=app/shop",
+    "dev:admin": "npm run dev --workspace=app/admin",
+    "build:shop": "npm run build --workspace=app/shop",
+    "build:admin": "npm run build --workspace=app/admin"
+  },
+  "workspaces": [
+    "app/shared",
+    "app/shop",
+    "app/admin"
+  ],
+  "private": true,
+  "imports": {
+    "#cds-models/*": "./@cds-models/*/index.js"
+  },
+  "cds": {
+    "requires": {
+      "app-front": true,
+      "[production]": {
+        "auth": "xsuaa"
+      }
+    }
+  }
+}

@@ -1,0 +1,9 @@
+ID,title,description,isbn,price,currency_code,stock,publishedDate,rating,author_ID,publisher_ID
+c1b2c3d4-e5f6-7890-abcd-ef1234567801,Wuthering Heights,A tale of passion and revenge on the Yorkshire moors,9780141439556,12.99,USD,100,1847-12-01,4.2,a1b2c3d4-e5f6-7890-abcd-ef1234567801,b1b2c3d4-e5f6-7890-abcd-ef1234567801
+c1b2c3d4-e5f6-7890-abcd-ef1234567802,Jane Eyre,An orphaned governess falls in love with her mysterious employer,9780141441146,11.99,USD,85,1847-10-16,4.4,a1b2c3d4-e5f6-7890-abcd-ef1234567802,b1b2c3d4-e5f6-7890-abcd-ef1234567802
+c1b2c3d4-e5f6-7890-abcd-ef1234567803,The Raven,A narrative poem about a grieving lover visited by a raven,9780486266855,5.99,USD,200,1845-01-29,4.7,a1b2c3d4-e5f6-7890-abcd-ef1234567803,b1b2c3d4-e5f6-7890-abcd-ef1234567803
+c1b2c3d4-e5f6-7890-abcd-ef1234567804,Eleonora,A short story of love and loss in a mystical valley,9780486295190,4.99,USD,150,1842-01-01,3.9,a1b2c3d4-e5f6-7890-abcd-ef1234567803,b1b2c3d4-e5f6-7890-abcd-ef1234567803
+c1b2c3d4-e5f6-7890-abcd-ef1234567805,Catweazle,An 11th-century wizard accidentally travels to modern times,9780140306705,8.99,USD,60,1970-01-01,4.0,a1b2c3d4-e5f6-7890-abcd-ef1234567804,b1b2c3d4-e5f6-7890-abcd-ef1234567804
+c1b2c3d4-e5f6-7890-abcd-ef1234567806,Pride and Prejudice,A witty tale of love and social standing in Regency England,9780141439518,10.99,USD,120,1813-01-28,4.6,a1b2c3d4-e5f6-7890-abcd-ef1234567805,b1b2c3d4-e5f6-7890-abcd-ef1234567802
+c1b2c3d4-e5f6-7890-abcd-ef1234567807,Sense and Sensibility,Two sisters navigate love and heartbreak,9780141439662,9.99,USD,90,1811-01-01,4.3,a1b2c3d4-e5f6-7890-abcd-ef1234567805,b1b2c3d4-e5f6-7890-abcd-ef1234567802
+c1b2c3d4-e5f6-7890-abcd-ef1234567808,Adventures of Huckleberry Finn,A boy and escaped slave raft down the Mississippi,9780142437179,11.49,USD,75,1884-12-10,4.5,a1b2c3d4-e5f6-7890-abcd-ef1234567806,b1b2c3d4-e5f6-7890-abcd-ef1234567805
