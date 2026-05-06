@@ -49,12 +49,35 @@ entity Publishers : cuid, managed {
 }
 
 entity Orders : cuid, managed {
-  orderNo     : String(20);
-  orderDate   : DateTime default $now;
-  status      : String enum { draft; submitted; confirmed; shipped; delivered; cancelled } default 'draft';
-  totalAmount : Decimal(12, 2);
-  currency    : Currency;
-  items       : Composition of many OrderItems on items.parent = $self;
+  orderNo      : String(20);
+  orderDate    : DateTime default $now;
+  status       : String enum { draft; submitted; confirmed; shipped; delivered; cancelled } default 'draft';
+  totalAmount  : Decimal(12, 2);
+  currency     : Currency;
+  items        : Composition of many OrderItems on items.parent = $self;
+  statusEvents : Composition of many OrderStatusEvents on statusEvents.order = $self;
+  shipment     : Composition of one Shipments on shipment.order = $self;
+}
+
+entity OrderStatusEvents : cuid {
+  order  : Association to Orders;
+  status : String enum { draft; submitted; confirmed; shipped; delivered; cancelled };
+  at     : DateTime;
+}
+
+entity Shipments : cuid, managed {
+  order        : Association to Orders;
+  originName   : String(120);
+  originLat    : Decimal(9, 6);
+  originLng    : Decimal(9, 6);
+  destName     : String(200);
+  destLat      : Decimal(9, 6);
+  destLng      : Decimal(9, 6);
+  // JSON-encoded array of [lng, lat] pairs forming the road route polyline.
+  routeGeojson : LargeString;
+  shippedAt    : DateTime;
+  etaMinutes   : Integer;
+  deliveredAt  : DateTime;
 }
 
 entity OrderItems : cuid {
