@@ -10,6 +10,21 @@ const SPA_APPS = [
 ] as const
 
 cds.on('bootstrap', (app: any) => {
+  // CAP's welcome page links to discovered files like `shop/index.html`. Our
+  // SPAs are mounted at `/shop` and `/admin`, so rewrite the links to the mount
+  // paths and hide entries from `dist/` builds that duplicate the source apps.
+  app.get('/', (_req: any, res: any, next: any) => {
+    try {
+      const { html } = require('@sap/cds/app/index.js') as { html: string }
+      const rewritten = html
+        .replace(/<li><a href="[^"]*\/dist\/index\.html"[\s\S]*?<\/li>\s*/g, '')
+        .replace(/href="([^"]+)\/index\.html"/g, 'href="$1"')
+      res.send(rewritten)
+    } catch {
+      next()
+    }
+  })
+
   // Server-Sent Events for the live admin dashboard. Open in dev — production
   // should sit behind the approuter and be gated on the admin role.
   app.get('/api/admin/events', (req: any, res: any) => {

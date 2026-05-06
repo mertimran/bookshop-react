@@ -20,13 +20,24 @@
   },
   "scripts": {
     "start": "cds-serve",
+    "watch": "cds watch",
+    "watch:hybrid": "cds watch --profile hybrid",
     "dev:shop": "npm run dev --workspace=app/shop",
     "dev:admin": "npm run dev --workspace=app/admin",
+    "build": "cds build --production && npm run build:srv",
+    "build:srv": "tsc --project tsconfig.build.json",
     "build:shop": "npm run build --workspace=app/shop",
     "build:admin": "npm run build --workspace=app/admin",
-    "build:cap": "cds build --production",
-    "build:mta": "mbt build -t ./mta_archives",
-    "deploy": "npm run build:mta && cf deploy mta_archives/bookshop_1.0.0.mtar"
+    "build:hana": "cds build --for hana",
+    "build:models": "cds build --for nodejs && npx @cap-js/cds-typer '*' --outputDirectory @cds-models",
+    "build:mta": "mbt build",
+    "build:clean": "rimraf gen mta_archives",
+    "typecheck": "tsc --noEmit",
+    "login": "cf login -a https://api.cf.eu20-001.hana.ondemand.com --sso",
+    "deploy:hana": "cds deploy --to hana --profile hybrid",
+    "deploy:hana:force": "HDI_DEPLOY_OPTIONS='{\"treat_unmodified_as_modified\":true,\"auto_undeploy\":true}' cds deploy --to hana --profile hybrid",
+    "deploy": "cf deploy mta_archives/bookshop_1.0.0.mtar",
+    "killport": "kill-port --port 4004"
   },
   "workspaces": [
     "app/shared",
