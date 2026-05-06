@@ -2,193 +2,191 @@ import { createFileRoute } from '@tanstack/react-router'
 import {
   Typography,
   Grid,
-  Card,
-  CardContent,
   Box,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Chip,
-  alpha,
+  Button,
+  Snackbar,
+  Alert,
   useTheme,
-  Skeleton,
+  LinearProgress,
 } from '@mui/material'
 import MenuBookIcon from '@mui/icons-material/MenuBook'
-import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined'
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney'
 import WarningAmberIcon from '@mui/icons-material/WarningAmber'
+import BoltIcon from '@mui/icons-material/Bolt'
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline'
 import { useTranslation } from 'react-i18next'
-import { useEffect, useState } from 'react'
-import { adminApi, type Book, type Order } from '@bookshop/shared/api'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { catalogApi } from '@bookshop/shared/api'
+import { useLiveOrders, type LiveEvent } from '../components/dashboard/useLiveOrders'
+import { useBooks } from '../components/dashboard/useBooks'
+import { StatCard } from '../components/dashboard/StatCard'
+import { ConnectionPill } from '../components/dashboard/ConnectionPill'
+import { StatusDonut } from '../components/dashboard/StatusDonut'
+import { StockLevels } from '../components/dashboard/StockLevels'
+import { HourlyAreaChart } from '../components/dashboard/HourlyAreaChart'
+import { ChartCard } from '../components/dashboard/ChartCard'
+import { RecentOrders } from '../components/dashboard/RecentOrders'
 
 export const Route = createFileRoute('/')({
   component: DashboardPage,
 })
 
-const STATUS_COLOR: Record<string, 'default' | 'info' | 'primary' | 'warning' | 'success' | 'error'> = {
-  draft: 'default',
-  submitted: 'info',
-  confirmed: 'primary',
-  shipped: 'warning',
-  delivered: 'success',
-  cancelled: 'error',
-}
-
-function StatCard({
-  label,
-  value,
-  icon,
-  color,
-}: {
-  label: string
-  value: string | number
-  icon: React.ReactNode
-  color: string
-}) {
-  const theme = useTheme()
-
-  return (
-    <Card sx={{ border: 1, borderColor: 'divider' }}>
-      <CardContent sx={{ p: 3, '&:last-child': { pb: 3 } }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <Box>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              textTransform="uppercase"
-              fontWeight={600}
-              letterSpacing="0.05em"
-            >
-              {label}
-            </Typography>
-            <Typography variant="h3" fontWeight={800} sx={{ mt: 0.5 }}>
-              {value}
-            </Typography>
-          </Box>
-          <Box
-            sx={{
-              bgcolor: alpha(color, 0.1),
-              color,
-              p: 1.5,
-              borderRadius: 3,
-              display: 'flex',
-            }}
-          >
-            {icon}
-          </Box>
-        </Box>
-      </CardContent>
-    </Card>
-  )
+function isToday(iso?: string) {
+  if (!iso) return false
+  const d = new Date(iso)
+  const today = new Date()
+  return d.toDateString() === today.toDateString()
 }
 
 function DashboardPage() {
   const { t } = useTranslation()
   const theme = useTheme()
-  const [books, setBooks] = useState<Book[]>([])
-  const [orders, setOrders] = useState<Order[]>([])
-  const [loading, setLoading] = useState(true)
+  const { orders, loading: ordersLoading, conn, lastEvent } = useLiveOrders()
+  const { books, loading: booksLoading } = useBooks()
+
+  const [seeding, setSeeding] = useState(false)
+  const [toast, setToast] = useState<{ msg: string; sev: 'success' | 'info' } | null>(null)
+  const [orderPulseKey, setOrderPulseKey] = useState(0)
+  const seenEventRef = useRef<LiveEvent | null>(null)
 
   useEffect(() => {
-    Promise.all([
-      adminApi.getBooks(),
-      adminApi.getOrders('$orderby=orderDate desc&$top=5'),
-    ])
-      .then(([booksRes, ordersRes]) => {
-        setBooks(booksRes.value)
-        setOrders(ordersRes.value)
+    if (!lastEvent || lastEvent === seenEventRef.current) return
+    seenEventRef.current = lastEvent
+    setOrderPulseKey((k) => k + 1)
+    if (lastEvent.type === 'order.created' && lastEvent.order) {
+      setToast({
+        msg: `${t('newOrder')}: ${lastEvent.order.orderNo} — $${(lastEvent.order.totalAmount || 0).toFixed(2)}`,
+        sev: 'success',
       })
-      .finally(() => setLoading(false))
-  }, [])
+    } else if (lastEvent.type === 'order.updated' && lastEvent.order) {
+      setToast({
+        msg: `${t('orderUpdated')}: ${lastEvent.order.orderNo} → ${t(lastEvent.order.status ?? 'draft')}`,
+        sev: 'info',
+      })
+    }
+  }, [lastEvent, t])
 
-  if (loading) {
-    return (
-      <>
-        <Skeleton width={200} height={48} sx={{ mb: 3 }} />
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          {[...Array(4)].map((_, i) => (
-            <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
-              <Skeleton variant="rounded" height={120} sx={{ borderRadius: 4 }} />
-            </Grid>
-          ))}
-        </Grid>
-        <Skeleton variant="rounded" height={300} sx={{ borderRadius: 4 }} />
-      </>
-    )
+  const ordersToday = useMemo(() => orders.filter((o) => isToday(o.orderDate ?? undefined)), [orders])
+  const revenueToday = ordersToday.reduce((s, o) => s + (o.totalAmount || 0), 0)
+  const lowStockBooks = useMemo(() => books.filter((b) => (b.stock ?? 0) < 10), [books])
+
+  const handleSeed = async () => {
+    setSeeding(true)
+    try {
+      await catalogApi.seedDemoOrder()
+    } catch (e) {
+      setToast({ msg: e instanceof Error ? e.message : String(e), sev: 'info' })
+    } finally {
+      setSeeding(false)
+    }
   }
-
-  const totalRevenue = orders.reduce((sum, o) => sum + (o.totalAmount || 0), 0)
-  const lowStockBooks = books.filter((b) => b.stock < 10)
-
-  const stats = [
-    { label: t('totalBooks'), value: books.length, icon: <MenuBookIcon />, color: theme.palette.primary.main },
-    { label: t('totalOrders'), value: orders.length, icon: <LocalShippingOutlinedIcon />, color: '#2e7d32' },
-    { label: t('totalRevenue'), value: `$${totalRevenue.toFixed(2)}`, icon: <AttachMoneyIcon />, color: theme.palette.secondary.main },
-    { label: t('lowStock'), value: lowStockBooks.length, icon: <WarningAmberIcon />, color: '#d32f2f' },
-  ]
 
   return (
     <>
-      <Typography variant="h2" sx={{ mb: 0.5 }}>{t('dashboard')}</Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-        Overview
-      </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 0.5, flexWrap: 'wrap' }}>
+        <Typography variant="h2">{t('dashboard')}</Typography>
+        <ConnectionPill conn={conn} />
+      </Box>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4, flexWrap: 'wrap' }}>
+        <Typography variant="body1" color="text.secondary" sx={{ flex: 1 }}>
+          {t('live')} · {new Date().toLocaleDateString()}
+        </Typography>
+        <Button
+          variant="outlined"
+          size="small"
+          startIcon={<AddCircleOutlineIcon />}
+          onClick={handleSeed}
+          disabled={seeding}
+        >
+          {t('seedDemoOrder')}
+        </Button>
+      </Box>
 
-      <Grid container spacing={3} sx={{ mb: 5 }}>
-        {stats.map((stat) => (
-          <Grid size={{ xs: 12, sm: 6, md: 3 }} key={stat.label}>
-            <StatCard {...stat} />
-          </Grid>
-        ))}
+      {(ordersLoading || booksLoading) && (
+        <LinearProgress sx={{ mb: 3, borderRadius: 2 }} />
+      )}
+
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            label={t('ordersToday')}
+            value={ordersToday.length}
+            icon={<BoltIcon />}
+            color={theme.palette.primary.main}
+            pulseKey={orderPulseKey}
+            loading={ordersLoading}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            label={t('revenueToday')}
+            value={revenueToday}
+            format={(v) => `$${v.toFixed(2)}`}
+            icon={<AttachMoneyIcon />}
+            color={theme.palette.secondary.main}
+            pulseKey={orderPulseKey}
+            loading={ordersLoading}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            label={t('totalBooks')}
+            value={books.length}
+            icon={<MenuBookIcon />}
+            color="#2e7d32"
+            loading={booksLoading}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            label={t('lowStock')}
+            value={lowStockBooks.length}
+            icon={<WarningAmberIcon />}
+            color="#d32f2f"
+            loading={booksLoading}
+          />
+        </Grid>
       </Grid>
 
-      <Typography variant="h5" fontWeight={700} sx={{ mb: 2 }}>
-        {t('recentOrders')}
-      </Typography>
-      <TableContainer component={Paper} sx={{ border: 1, borderColor: 'divider' }}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>{t('orderNo')}</TableCell>
-              <TableCell>{t('orderDate')}</TableCell>
-              <TableCell>{t('status')}</TableCell>
-              <TableCell align="right">{t('total')}</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {orders.map((order) => (
-              <TableRow key={order.ID} sx={{ '&:last-child td': { border: 0 } }}>
-                <TableCell>
-                  <Typography fontWeight={600}>{order.orderNo}</Typography>
-                </TableCell>
-                <TableCell>{new Date(order.orderDate).toLocaleDateString()}</TableCell>
-                <TableCell>
-                  <Chip
-                    label={t(order.status)}
-                    color={STATUS_COLOR[order.status] || 'default'}
-                    size="small"
-                    variant="outlined"
-                  />
-                </TableCell>
-                <TableCell align="right">
-                  <Typography fontWeight={600}>${order.totalAmount?.toFixed(2) || '0.00'}</Typography>
-                </TableCell>
-              </TableRow>
-            ))}
-            {orders.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
-                  <Typography color="text.secondary">{t('noData')}</Typography>
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid size={{ xs: 12, lg: 7 }}>
+          <ChartCard title={t('ordersByHour')} loading={ordersLoading}>
+            <HourlyAreaChart orders={orders} />
+          </ChartCard>
+        </Grid>
+        <Grid size={{ xs: 12, lg: 5 }}>
+          <ChartCard title={t('orderStatusDistribution')} loading={ordersLoading}>
+            <StatusDonut orders={orders} />
+          </ChartCard>
+        </Grid>
+      </Grid>
+
+      <Grid container spacing={3}>
+        <Grid size={{ xs: 12, lg: 7 }}>
+          <ChartCard title={t('lowestStock')} loading={booksLoading}>
+            <StockLevels books={books} />
+          </ChartCard>
+        </Grid>
+        <Grid size={{ xs: 12, lg: 5 }}>
+          <RecentOrders orders={orders} loading={ordersLoading} />
+        </Grid>
+      </Grid>
+
+      <Snackbar
+        open={!!toast}
+        autoHideDuration={3000}
+        onClose={() => setToast(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert
+          severity={toast?.sev || 'info'}
+          variant="filled"
+          onClose={() => setToast(null)}
+          sx={{ minWidth: 280 }}
+        >
+          {toast?.msg}
+        </Alert>
+      </Snackbar>
     </>
   )
 }

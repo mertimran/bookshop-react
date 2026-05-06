@@ -1,45 +1,30 @@
 import { createFileRoute } from '@tanstack/react-router'
-import {
-  Typography,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  IconButton,
-  Button,
-  Box,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Grid,
-  Skeleton,
-  alpha,
-  useTheme,
-} from '@mui/material'
+import { Typography, Button, Box, Skeleton } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
-import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import { useTranslation } from 'react-i18next'
 import { useEffect, useState } from 'react'
 import { adminApi, type Author } from '@bookshop/shared/api'
+import { AuthorsTable } from '../components/authors/AuthorsTable'
+import { AuthorEditor } from '../components/authors/AuthorEditor'
+import { DeleteConfirmDialog } from '../components/DeleteConfirmDialog'
 
 export const Route = createFileRoute('/authors')({
   component: AuthorsPage,
 })
 
+const NEW_ID = '__new__'
+
 function AuthorsPage() {
   const { t } = useTranslation()
-  const theme = useTheme()
   const [authors, setAuthors] = useState<Author[]>([])
   const [loading, setLoading] = useState(true)
-  const [editAuthor, setEditAuthor] = useState<Partial<Author> | null>(null)
-  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [form, setForm] = useState<Partial<Author>>({})
   const [saving, setSaving] = useState(false)
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [error, setError] = useState('')
+
+  const isCreating = selectedId === NEW_ID
 
   const loadAuthors = () => {
     setLoading(true)
@@ -48,17 +33,29 @@ function AuthorsPage() {
 
   useEffect(loadAuthors, [])
 
+  useEffect(() => {
+    if (!selectedId) { setForm({}); setError(''); return }
+    if (isCreating) {
+      setForm({ name: '', biography: '', dateOfBirth: '' })
+      return
+    }
+    const found = authors.find((a) => a.ID === selectedId)
+    if (found) setForm(found)
+  }, [selectedId, authors, isCreating])
+
   const handleSave = async () => {
-    if (!editAuthor) return
     setSaving(true)
+    setError('')
     try {
-      if (editAuthor.ID) {
-        await adminApi.updateAuthor(editAuthor.ID, editAuthor)
-      } else {
-        await adminApi.createAuthor(editAuthor)
+      if (isCreating) {
+        await adminApi.createAuthor(form)
+      } else if (selectedId) {
+        await adminApi.updateAuthor(selectedId, form)
       }
-      setEditAuthor(null)
+      setSelectedId(null)
       loadAuthors()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
     } finally {
       setSaving(false)
     }
@@ -67,6 +64,7 @@ function AuthorsPage() {
   const handleDelete = async () => {
     if (!deleteId) return
     await adminApi.deleteAuthor(deleteId)
+    if (selectedId === deleteId) setSelectedId(null)
     setDeleteId(null)
     loadAuthors()
   }
@@ -80,11 +78,7 @@ function AuthorsPage() {
             {authors.length} total
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => setEditAuthor({ name: '', biography: '', dateOfBirth: '' })}
-        >
+        <Button variant="contained" startIcon={<AddIcon />} onClick={() => setSelectedId(NEW_ID)}>
           {t('create')}
         </Button>
       </Box>
@@ -92,98 +86,26 @@ function AuthorsPage() {
       {loading ? (
         <Skeleton variant="rounded" height={300} sx={{ borderRadius: 4 }} />
       ) : (
-        <TableContainer component={Paper} sx={{ border: 1, borderColor: 'divider' }}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>{t('name')}</TableCell>
-                <TableCell>{t('dateOfBirth')}</TableCell>
-                <TableCell>{t('biography')}</TableCell>
-                <TableCell align="right">{t('actions')}</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {authors.map((author) => (
-                <TableRow key={author.ID} sx={{ '&:last-child td': { border: 0 } }}>
-                  <TableCell>
-                    <Typography fontWeight={600}>{author.name}</Typography>
-                  </TableCell>
-                  <TableCell>{author.dateOfBirth}</TableCell>
-                  <TableCell>
-                    <Typography noWrap sx={{ maxWidth: 300 }} color="text.secondary">
-                      {author.biography}
-                    </Typography>
-                  </TableCell>
-                  <TableCell align="right">
-                    <IconButton size="small" onClick={() => setEditAuthor(author)} sx={{ color: 'primary.main' }}>
-                      <EditOutlinedIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      onClick={() => setDeleteId(author.ID)}
-                      sx={{ color: 'error.main', '&:hover': { bgcolor: alpha(theme.palette.error.main, 0.08) } }}
-                    >
-                      <DeleteOutlineIcon fontSize="small" />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+        <AuthorsTable authors={authors} selectedId={selectedId} onSelect={setSelectedId} />
       )}
 
-      <Dialog open={!!editAuthor} onClose={() => setEditAuthor(null)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 4 } }}>
-        <DialogTitle fontWeight={700}>{editAuthor?.ID ? t('edit') : t('create')}</DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid size={12}>
-              <TextField
-                fullWidth
-                required
-                label={t('name')}
-                value={editAuthor?.name || ''}
-                onChange={(e) => setEditAuthor({ ...editAuthor, name: e.target.value })}
-              />
-            </Grid>
-            <Grid size={12}>
-              <TextField
-                fullWidth
-                type="date"
-                label={t('dateOfBirth')}
-                value={editAuthor?.dateOfBirth || ''}
-                onChange={(e) => setEditAuthor({ ...editAuthor, dateOfBirth: e.target.value })}
-                slotProps={{ inputLabel: { shrink: true } }}
-              />
-            </Grid>
-            <Grid size={12}>
-              <TextField
-                fullWidth
-                multiline
-                rows={3}
-                label={t('biography')}
-                value={editAuthor?.biography || ''}
-                onChange={(e) => setEditAuthor({ ...editAuthor, biography: e.target.value })}
-              />
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions sx={{ p: 2.5 }}>
-          <Button onClick={() => setEditAuthor(null)} variant="outlined">{t('cancel')}</Button>
-          <Button variant="contained" onClick={handleSave} disabled={saving}>
-            {saving ? t('loading') : t('save')}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <AuthorEditor
+        open={!!selectedId}
+        isCreating={isCreating}
+        form={form}
+        setForm={setForm}
+        saving={saving}
+        error={error}
+        onClose={() => setSelectedId(null)}
+        onSave={handleSave}
+        onRequestDelete={() => selectedId && setDeleteId(selectedId)}
+      />
 
-      <Dialog open={!!deleteId} onClose={() => setDeleteId(null)} PaperProps={{ sx: { borderRadius: 4 } }}>
-        <DialogTitle fontWeight={700}>{t('delete')}</DialogTitle>
-        <DialogContent>{t('deleteConfirm')}</DialogContent>
-        <DialogActions sx={{ p: 2.5 }}>
-          <Button onClick={() => setDeleteId(null)}>{t('cancel')}</Button>
-          <Button color="error" variant="contained" onClick={handleDelete}>{t('delete')}</Button>
-        </DialogActions>
-      </Dialog>
+      <DeleteConfirmDialog
+        open={!!deleteId}
+        onCancel={() => setDeleteId(null)}
+        onConfirm={handleDelete}
+      />
     </>
   )
 }

@@ -1,46 +1,69 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
-import {
-  Typography,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Chip,
-  IconButton,
-  Skeleton,
-} from '@mui/material'
-import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
+import { createFileRoute } from '@tanstack/react-router'
+import { Typography, Skeleton } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import { useEffect, useState } from 'react'
 import { adminApi, type Order } from '@bookshop/shared/api'
+import { OrdersTable } from '../../components/orders/OrdersTable'
+import { OrderDetailDrawer } from '../../components/orders/OrderDetailDrawer'
 
 export const Route = createFileRoute('/orders/')({
   component: OrdersManagePage,
 })
 
-const STATUS_COLOR: Record<string, 'default' | 'info' | 'primary' | 'warning' | 'success' | 'error'> = {
-  draft: 'default',
-  submitted: 'info',
-  confirmed: 'primary',
-  shipped: 'warning',
-  delivered: 'success',
-  cancelled: 'error',
-}
-
 function OrdersManagePage() {
   const { t } = useTranslation()
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [detail, setDetail] = useState<Order | null>(null)
+  const [detailLoading, setDetailLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
 
-  useEffect(() => {
+  const loadOrders = () => {
+    setLoading(true)
     adminApi
       .getOrders('$orderby=orderDate desc')
       .then((r) => setOrders(r.value))
       .finally(() => setLoading(false))
-  }, [])
+  }
+
+  useEffect(loadOrders, [])
+
+  useEffect(() => {
+    if (!selectedId) {
+      setDetail(null)
+      setError('')
+      return
+    }
+    setDetailLoading(true)
+    adminApi
+      .getOrder(selectedId)
+      .then(setDetail)
+      .catch((e) => setError(e instanceof Error ? e.message : String(e)))
+      .finally(() => setDetailLoading(false))
+  }, [selectedId])
+
+  const handleAction = async (action: 'confirm' | 'ship' | 'cancel') => {
+    if (!selectedId) return
+    setBusy(true)
+    setError('')
+    try {
+      const fn = {
+        confirm: adminApi.confirmOrder,
+        ship: adminApi.shipOrder,
+        cancel: adminApi.cancelOrder,
+      }[action]
+      await fn(selectedId)
+      const fresh = await adminApi.getOrder(selectedId)
+      setDetail(fresh)
+      loadOrders()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setBusy(false)
+    }
+  }
 
   return (
     <>
@@ -52,59 +75,18 @@ function OrdersManagePage() {
       {loading ? (
         <Skeleton variant="rounded" height={400} sx={{ borderRadius: 4 }} />
       ) : (
-        <TableContainer component={Paper} sx={{ border: 1, borderColor: 'divider' }}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>{t('orderNo')}</TableCell>
-                <TableCell>{t('orderDate')}</TableCell>
-                <TableCell>{t('status')}</TableCell>
-                <TableCell align="right">{t('total')}</TableCell>
-                <TableCell align="right">{t('actions')}</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {orders.map((order) => (
-                <TableRow key={order.ID} sx={{ '&:last-child td': { border: 0 } }}>
-                  <TableCell>
-                    <Typography fontWeight={600}>{order.orderNo}</Typography>
-                  </TableCell>
-                  <TableCell>{new Date(order.orderDate).toLocaleDateString()}</TableCell>
-                  <TableCell>
-                    <Chip
-                      label={t(order.status)}
-                      color={STATUS_COLOR[order.status] || 'default'}
-                      size="small"
-                      variant="outlined"
-                    />
-                  </TableCell>
-                  <TableCell align="right">
-                    <Typography fontWeight={600}>${order.totalAmount?.toFixed(2) || '0.00'}</Typography>
-                  </TableCell>
-                  <TableCell align="right">
-                    <IconButton
-                      component={Link}
-                      to="/orders/$orderId"
-                      params={{ orderId: order.ID }}
-                      size="small"
-                      sx={{ color: 'primary.main' }}
-                    >
-                      <VisibilityOutlinedIcon fontSize="small" />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {orders.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
-                    <Typography color="text.secondary">{t('noData')}</Typography>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+        <OrdersTable orders={orders} selectedId={selectedId} onSelect={setSelectedId} />
       )}
+
+      <OrderDetailDrawer
+        open={!!selectedId}
+        detail={detail}
+        loading={detailLoading}
+        busy={busy}
+        error={error}
+        onClose={() => setSelectedId(null)}
+        onAction={handleAction}
+      />
     </>
   )
 }

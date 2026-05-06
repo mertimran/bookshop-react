@@ -1,46 +1,30 @@
 import { createFileRoute } from '@tanstack/react-router'
-import {
-  Typography,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  IconButton,
-  Button,
-  Box,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Grid,
-  Link as MuiLink,
-  Skeleton,
-  alpha,
-  useTheme,
-} from '@mui/material'
+import { Typography, Button, Box, Skeleton } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
-import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import { useTranslation } from 'react-i18next'
 import { useEffect, useState } from 'react'
 import { adminApi, type Publisher } from '@bookshop/shared/api'
+import { PublishersTable } from '../components/publishers/PublishersTable'
+import { PublisherEditor } from '../components/publishers/PublisherEditor'
+import { DeleteConfirmDialog } from '../components/DeleteConfirmDialog'
 
 export const Route = createFileRoute('/publishers')({
   component: PublishersPage,
 })
 
+const NEW_ID = '__new__'
+
 function PublishersPage() {
   const { t } = useTranslation()
-  const theme = useTheme()
   const [publishers, setPublishers] = useState<Publisher[]>([])
   const [loading, setLoading] = useState(true)
-  const [editPub, setEditPub] = useState<Partial<Publisher> | null>(null)
-  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [form, setForm] = useState<Partial<Publisher>>({})
   const [saving, setSaving] = useState(false)
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [error, setError] = useState('')
+
+  const isCreating = selectedId === NEW_ID
 
   const loadPublishers = () => {
     setLoading(true)
@@ -49,17 +33,29 @@ function PublishersPage() {
 
   useEffect(loadPublishers, [])
 
+  useEffect(() => {
+    if (!selectedId) { setForm({}); setError(''); return }
+    if (isCreating) {
+      setForm({ name: '', address: '', website: '' })
+      return
+    }
+    const found = publishers.find((p) => p.ID === selectedId)
+    if (found) setForm(found)
+  }, [selectedId, publishers, isCreating])
+
   const handleSave = async () => {
-    if (!editPub) return
     setSaving(true)
+    setError('')
     try {
-      if (editPub.ID) {
-        await adminApi.updatePublisher(editPub.ID, editPub)
-      } else {
-        await adminApi.createPublisher(editPub)
+      if (isCreating) {
+        await adminApi.createPublisher(form)
+      } else if (selectedId) {
+        await adminApi.updatePublisher(selectedId, form)
       }
-      setEditPub(null)
+      setSelectedId(null)
       loadPublishers()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
     } finally {
       setSaving(false)
     }
@@ -68,6 +64,7 @@ function PublishersPage() {
   const handleDelete = async () => {
     if (!deleteId) return
     await adminApi.deletePublisher(deleteId)
+    if (selectedId === deleteId) setSelectedId(null)
     setDeleteId(null)
     loadPublishers()
   }
@@ -81,11 +78,7 @@ function PublishersPage() {
             {publishers.length} total
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => setEditPub({ name: '', address: '', website: '' })}
-        >
+        <Button variant="contained" startIcon={<AddIcon />} onClick={() => setSelectedId(NEW_ID)}>
           {t('create')}
         </Button>
       </Box>
@@ -93,96 +86,30 @@ function PublishersPage() {
       {loading ? (
         <Skeleton variant="rounded" height={300} sx={{ borderRadius: 4 }} />
       ) : (
-        <TableContainer component={Paper} sx={{ border: 1, borderColor: 'divider' }}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>{t('name')}</TableCell>
-                <TableCell>{t('address')}</TableCell>
-                <TableCell>{t('website')}</TableCell>
-                <TableCell align="right">{t('actions')}</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {publishers.map((pub) => (
-                <TableRow key={pub.ID} sx={{ '&:last-child td': { border: 0 } }}>
-                  <TableCell>
-                    <Typography fontWeight={600}>{pub.name}</Typography>
-                  </TableCell>
-                  <TableCell>{pub.address}</TableCell>
-                  <TableCell>
-                    {pub.website && (
-                      <MuiLink href={pub.website} target="_blank" rel="noopener noreferrer" color="primary">
-                        {pub.website}
-                      </MuiLink>
-                    )}
-                  </TableCell>
-                  <TableCell align="right">
-                    <IconButton size="small" onClick={() => setEditPub(pub)} sx={{ color: 'primary.main' }}>
-                      <EditOutlinedIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      onClick={() => setDeleteId(pub.ID)}
-                      sx={{ color: 'error.main', '&:hover': { bgcolor: alpha(theme.palette.error.main, 0.08) } }}
-                    >
-                      <DeleteOutlineIcon fontSize="small" />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+        <PublishersTable
+          publishers={publishers}
+          selectedId={selectedId}
+          onSelect={setSelectedId}
+        />
       )}
 
-      <Dialog open={!!editPub} onClose={() => setEditPub(null)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 4 } }}>
-        <DialogTitle fontWeight={700}>{editPub?.ID ? t('edit') : t('create')}</DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid size={12}>
-              <TextField
-                fullWidth
-                required
-                label={t('name')}
-                value={editPub?.name || ''}
-                onChange={(e) => setEditPub({ ...editPub, name: e.target.value })}
-              />
-            </Grid>
-            <Grid size={12}>
-              <TextField
-                fullWidth
-                label={t('address')}
-                value={editPub?.address || ''}
-                onChange={(e) => setEditPub({ ...editPub, address: e.target.value })}
-              />
-            </Grid>
-            <Grid size={12}>
-              <TextField
-                fullWidth
-                label={t('website')}
-                value={editPub?.website || ''}
-                onChange={(e) => setEditPub({ ...editPub, website: e.target.value })}
-              />
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions sx={{ p: 2.5 }}>
-          <Button onClick={() => setEditPub(null)} variant="outlined">{t('cancel')}</Button>
-          <Button variant="contained" onClick={handleSave} disabled={saving}>
-            {saving ? t('loading') : t('save')}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <PublisherEditor
+        open={!!selectedId}
+        isCreating={isCreating}
+        form={form}
+        setForm={setForm}
+        saving={saving}
+        error={error}
+        onClose={() => setSelectedId(null)}
+        onSave={handleSave}
+        onRequestDelete={() => selectedId && setDeleteId(selectedId)}
+      />
 
-      <Dialog open={!!deleteId} onClose={() => setDeleteId(null)} PaperProps={{ sx: { borderRadius: 4 } }}>
-        <DialogTitle fontWeight={700}>{t('delete')}</DialogTitle>
-        <DialogContent>{t('deleteConfirm')}</DialogContent>
-        <DialogActions sx={{ p: 2.5 }}>
-          <Button onClick={() => setDeleteId(null)}>{t('cancel')}</Button>
-          <Button color="error" variant="contained" onClick={handleDelete}>{t('delete')}</Button>
-        </DialogActions>
-      </Dialog>
+      <DeleteConfirmDialog
+        open={!!deleteId}
+        onCancel={() => setDeleteId(null)}
+        onConfirm={handleDelete}
+      />
     </>
   )
 }

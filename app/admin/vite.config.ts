@@ -34,6 +34,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@bookshop/shared': resolve(__dirname, '../shared/src'),
+      '#cds-models': resolve(__dirname, '../../@cds-models'),
     },
   },
 })

@@ -111,7 +111,7 @@ function OrderDetailPage() {
               {t('orderDate')}
             </Typography>
             <Typography variant="h6" fontWeight={500}>
-              {new Date(order.orderDate).toLocaleDateString()}
+              {order.orderDate ? new Date(order.orderDate).toLocaleDateString() : ''}
             </Typography>
           </Grid>
           <Grid size={{ xs: 12, sm: 3 }}>
@@ -119,7 +119,7 @@ function OrderDetailPage() {
               {t('status')}
             </Typography>
             <Box sx={{ mt: 0.5 }}>
-              <Chip label={t(order.status)} color={STATUS_COLOR[order.status] || 'default'} />
+              <Chip label={t(order.status ?? 'draft')} color={STATUS_COLOR[order.status ?? 'draft'] || 'default'} />
             </Box>
           </Grid>
           <Grid size={{ xs: 12, sm: 3 }}>
@@ -181,7 +181,7 @@ function OrderDetailPage() {
             {t('shipOrder')}
           </Button>
         )}
-        {!['delivered', 'cancelled'].includes(order.status) && (
+        {!['delivered', 'cancelled'].includes(order.status ?? '') && (
           <Button
             variant="outlined"
             color="error"

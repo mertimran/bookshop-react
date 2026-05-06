@@ -9,6 +9,8 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as StatisticsRouteImport } from './routes/statistics'
+import { Route as ShipmentsRouteImport } from './routes/shipments'
 import { Route as PublishersRouteImport } from './routes/publishers'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as GenresRouteImport } from './routes/genres'
@@ -20,6 +22,16 @@ import { Route as OrdersOrderIdRouteImport } from './routes/orders/$orderId'
 import { Route as BooksNewRouteImport } from './routes/books/new'
 import { Route as BooksBookIdRouteImport } from './routes/books/$bookId'
 
+const StatisticsRoute = StatisticsRouteImport.update({
+  id: '/statistics',
+  path: '/statistics',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShipmentsRoute = ShipmentsRouteImport.update({
+  id: '/shipments',
+  path: '/shipments',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PublishersRoute = PublishersRouteImport.update({
   id: '/publishers',
   path: '/publishers',
@@ -77,6 +89,8 @@ export interface FileRoutesByFullPath {
   '/genres': typeof GenresRoute
   '/login': typeof LoginRoute
   '/publishers': typeof PublishersRoute
+  '/shipments': typeof ShipmentsRoute
+  '/statistics': typeof StatisticsRoute
   '/books/$bookId': typeof BooksBookIdRoute
   '/books/new': typeof BooksNewRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
@@ -89,6 +103,8 @@ export interface FileRoutesByTo {
   '/genres': typeof GenresRoute
   '/login': typeof LoginRoute
   '/publishers': typeof PublishersRoute
+  '/shipments': typeof ShipmentsRoute
+  '/statistics': typeof StatisticsRoute
   '/books/$bookId': typeof BooksBookIdRoute
   '/books/new': typeof BooksNewRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
@@ -102,6 +118,8 @@ export interface FileRoutesById {
   '/genres': typeof GenresRoute
   '/login': typeof LoginRoute
   '/publishers': typeof PublishersRoute
+  '/shipments': typeof ShipmentsRoute
+  '/statistics': typeof StatisticsRoute
   '/books/$bookId': typeof BooksBookIdRoute
   '/books/new': typeof BooksNewRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
@@ -116,6 +134,8 @@ export interface FileRouteTypes {
     | '/genres'
     | '/login'
     | '/publishers'
+    | '/shipments'
+    | '/statistics'
     | '/books/$bookId'
     | '/books/new'
     | '/orders/$orderId'
@@ -128,6 +148,8 @@ export interface FileRouteTypes {
     | '/genres'
     | '/login'
     | '/publishers'
+    | '/shipments'
+    | '/statistics'
     | '/books/$bookId'
     | '/books/new'
     | '/orders/$orderId'
@@ -140,6 +162,8 @@ export interface FileRouteTypes {
     | '/genres'
     | '/login'
     | '/publishers'
+    | '/shipments'
+    | '/statistics'
     | '/books/$bookId'
     | '/books/new'
     | '/orders/$orderId'
@@ -153,6 +177,8 @@ export interface RootRouteChildren {
   GenresRoute: typeof GenresRoute
   LoginRoute: typeof LoginRoute
   PublishersRoute: typeof PublishersRoute
+  ShipmentsRoute: typeof ShipmentsRoute
+  StatisticsRoute: typeof StatisticsRoute
   BooksBookIdRoute: typeof BooksBookIdRoute
   BooksNewRoute: typeof BooksNewRoute
   OrdersOrderIdRoute: typeof OrdersOrderIdRoute
@@ -162,6 +188,20 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/statistics': {
+      id: '/statistics'
+      path: '/statistics'
+      fullPath: '/statistics'
+      preLoaderRoute: typeof StatisticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/shipments': {
+      id: '/shipments'
+      path: '/shipments'
+      fullPath: '/shipments'
+      preLoaderRoute: typeof ShipmentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/publishers': {
       id: '/publishers'
       path: '/publishers'
@@ -241,6 +281,8 @@ const rootRouteChildren: RootRouteChildren = {
   GenresRoute: GenresRoute,
   LoginRoute: LoginRoute,
   PublishersRoute: PublishersRoute,
+  ShipmentsRoute: ShipmentsRoute,
+  StatisticsRoute: StatisticsRoute,
   BooksBookIdRoute: BooksBookIdRoute,
   BooksNewRoute: BooksNewRoute,
   OrdersOrderIdRoute: OrdersOrderIdRoute,

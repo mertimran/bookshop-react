@@ -8,13 +8,12 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "outDir": "./dist",
-    "rootDir": "./src",
+    "noEmit": true,
     "paths": {
       "@bookshop/shared/*": ["../shared/src/*"],
-      "@bookshop/shared": ["../shared/src/index.ts"]
+      "@bookshop/shared": ["../shared/src/index.ts"],
+      "#cds-models/*": ["../../@cds-models/*"]
     }
   },
-  "include": ["src"],
-  "references": [{ "path": "../shared" }]
+  "include": ["src"]
 }

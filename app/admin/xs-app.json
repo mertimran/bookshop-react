@@ -3,15 +3,16 @@
   "authenticationMethod": "route",
   "routes": [
     {
-      "source": "^/?odata/(.*)$",
-      "target": "/odata/$1",
+      "source": "^/api/(.*)$",
+      "target": "/api/$1",
       "destination": "srv-api",
-      "csrfProtection": false,
-      "authenticationType": "xsuaa"
+      "authenticationType": "xsuaa",
+      "csrfProtection": false
     },
     {
       "source": ".*",
-      "service": "app-front"
+      "service": "app-front",
+      "authenticationType": "xsuaa"
     }
   ]
 }
