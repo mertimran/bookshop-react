@@ -10,13 +10,15 @@ import {
   TableRow,
   Chip,
   Container,
-  Box,
   Skeleton,
+  alpha,
+  useTheme,
 } from '@mui/material'
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong'
 import { useTranslation } from 'react-i18next'
 import { useEffect, useState } from 'react'
-import { type Order } from '@bookshop/shared/api'
+import { catalogApi, type Order } from '@bookshop/shared/api'
+import { OrderDetailDrawer } from '../../components/order-detail/OrderDetailDrawer'
 
 export const Route = createFileRoute('/orders/')({
   component: OrdersPage,
@@ -33,15 +35,32 @@ const STATUS_COLOR: Record<string, 'default' | 'info' | 'primary' | 'warning' | 
 
 function OrdersPage() {
   const { t } = useTranslation()
+  const theme = useTheme()
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [detail, setDetail] = useState<Order | null>(null)
+  const [detailLoading, setDetailLoading] = useState(false)
 
   useEffect(() => {
-    fetch('/api/catalog/Orders?$orderby=orderDate desc')
-      .then((r) => r.json())
-      .then((r) => setOrders(r.value || []))
+    catalogApi
+      .getOrders('$orderby=orderDate desc')
+      .then((r) => setOrders(r.value))
       .finally(() => setLoading(false))
   }, [])
+
+  useEffect(() => {
+    if (!selectedId) {
+      setDetail(null)
+      return
+    }
+    setDetailLoading(true)
+    catalogApi
+      .getOrder(selectedId)
+      .then(setDetail)
+      .catch(() => setDetail(null))
+      .finally(() => setDetailLoading(false))
+  }, [selectedId])
 
   return (
     <Container maxWidth="lg" sx={{ py: 5 }}>
@@ -70,17 +89,27 @@ function OrdersPage() {
             </TableHead>
             <TableBody>
               {orders.map((order) => (
-                <TableRow key={order.ID} sx={{ '&:last-child td': { border: 0 } }}>
+                <TableRow
+                  key={order.ID}
+                  hover
+                  onClick={() => setSelectedId(order.ID!)}
+                  selected={selectedId === order.ID}
+                  sx={{
+                    cursor: 'pointer',
+                    '&:last-child td': { border: 0 },
+                    '&.Mui-selected': { bgcolor: alpha(theme.palette.primary.main, 0.06) },
+                  }}
+                >
                   <TableCell>
                     <Typography fontWeight={600}>{order.orderNo}</Typography>
                   </TableCell>
                   <TableCell>
-                    {new Date(order.orderDate).toLocaleDateString()}
+                    {order.orderDate ? new Date(order.orderDate).toLocaleDateString() : ''}
                   </TableCell>
                   <TableCell>
                     <Chip
-                      label={t(order.status)}
-                      color={STATUS_COLOR[order.status] || 'default'}
+                      label={t(order.status ?? 'draft')}
+                      color={STATUS_COLOR[order.status ?? 'draft'] || 'default'}
                       size="small"
                       variant="outlined"
                     />
@@ -96,6 +125,13 @@ function OrdersPage() {
           </Table>
         </TableContainer>
       )}
+
+      <OrderDetailDrawer
+        open={!!selectedId}
+        detail={detail}
+        loading={detailLoading}
+        onClose={() => setSelectedId(null)}
+      />
     </Container>
   )
 }

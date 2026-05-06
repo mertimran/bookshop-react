@@ -7,6 +7,7 @@
   "search": "Search",
   "filter": "Filter",
   "sortBy": "Sort by",
+  "title": "Title",
   "price": "Price",
   "rating": "Rating",
   "author": "Author",
@@ -57,5 +58,16 @@
   "yourRating": "Your rating",
   "signInToReview": "Sign in to write a review",
   "signIn": "Sign in",
-  "noRatings": "No ratings yet"
+  "noRatings": "No ratings yet",
+  "orderDetails": "Order Details",
+  "orderItems": "Items",
+  "timeline": "Timeline",
+  "status": "Status",
+  "amount": "Amount",
+  "noData": "No data",
+  "orderNo": "Order #",
+  "orderDate": "Date",
+  "trackShipment": "Track your shipment",
+  "liveTracking": "Live tracking",
+  "noTrackingAvailable": "Tracking information is not available for this order"
 }

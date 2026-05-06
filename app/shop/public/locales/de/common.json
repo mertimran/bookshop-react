@@ -7,6 +7,7 @@
   "search": "Suchen",
   "filter": "Filtern",
   "sortBy": "Sortieren nach",
+  "title": "Titel",
   "price": "Preis",
   "rating": "Bewertung",
   "author": "Autor",
@@ -57,5 +58,16 @@
   "yourRating": "Ihre Bewertung",
   "signInToReview": "Melden Sie sich an, um eine Rezension zu schreiben",
   "signIn": "Anmelden",
-  "noRatings": "Noch keine Bewertungen"
+  "noRatings": "Noch keine Bewertungen",
+  "orderDetails": "Bestelldetails",
+  "orderItems": "Artikel",
+  "timeline": "Verlauf",
+  "status": "Status",
+  "amount": "Betrag",
+  "noData": "Keine Daten",
+  "orderNo": "Bestellnr.",
+  "orderDate": "Datum",
+  "trackShipment": "Sendung verfolgen",
+  "liveTracking": "Live-Verfolgung",
+  "noTrackingAvailable": "Für diese Bestellung sind keine Sendungsdaten verfügbar"
 }

@@ -1,144 +1,22 @@
 import { createRootRoute, Link, Outlet, useRouterState } from '@tanstack/react-router'
-import {
-  AppBar,
-  Toolbar,
-  Typography,
-  Button,
-  Container,
-  Box,
-  Badge,
-  IconButton,
-  useTheme,
-  alpha,
-  Avatar,
-  Menu,
-  MenuItem,
-  ListItemIcon,
-  Divider,
-} from '@mui/material'
+import { AppBar, Toolbar, Typography, Container, Box } from '@mui/material'
 import StorefrontIcon from '@mui/icons-material/Storefront'
-import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined'
-import PersonOutlinedIcon from '@mui/icons-material/PersonOutlined'
-import LogoutIcon from '@mui/icons-material/Logout'
 import { useTranslation } from 'react-i18next'
 import { LanguageSwitcher, ThemeToggle } from '@bookshop/shared/components'
 import { useThemeMode } from '@bookshop/shared/hooks'
-import { useAuth } from '@bookshop/shared/auth'
 import { useCart } from '../cart'
-import { useState } from 'react'
+import { CartButton } from '../components/layout/CartButton'
+import { NavLink } from '../components/layout/NavLink'
+import { UserMenu } from '../components/layout/UserMenu'
 
 export const Route = createRootRoute({
   component: RootLayout,
 })
 
-function NavLink({ to, label }: { to: string; label: string }) {
-  const pathname = useRouterState({ select: (s) => s.location.pathname })
-  const theme = useTheme()
-  const isActive = to === '/'
-    ? pathname === '/'
-    : pathname.startsWith(to)
-
-  return (
-    <Button
-      component={Link}
-      to={to}
-      sx={{
-        color: isActive ? 'primary.main' : 'text.secondary',
-        fontWeight: isActive ? 700 : 500,
-        position: 'relative',
-        px: 2,
-        '&::after': isActive
-          ? {
-              content: '""',
-              position: 'absolute',
-              bottom: -1,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: 24,
-              height: 3,
-              borderRadius: 2,
-              bgcolor: theme.palette.primary.main,
-            }
-          : {},
-        '&:hover': {
-          bgcolor: alpha(theme.palette.primary.main, 0.06),
-        },
-      }}
-    >
-      {label}
-    </Button>
-  )
-}
-
-function UserMenu() {
-  const { user, isAuthenticated, logout } = useAuth()
-  const theme = useTheme()
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
-
-  if (!isAuthenticated) {
-    return (
-      <Button
-        component={Link}
-        to="/login"
-        variant="outlined"
-        size="small"
-        startIcon={<PersonOutlinedIcon />}
-        sx={{ borderRadius: 8 }}
-      >
-        Sign In
-      </Button>
-    )
-  }
-
-  return (
-    <>
-      <IconButton
-        onClick={(e) => setAnchorEl(e.currentTarget)}
-        sx={{ p: 0.5 }}
-      >
-        <Avatar
-          sx={{
-            width: 32,
-            height: 32,
-            bgcolor: alpha(theme.palette.primary.main, 0.12),
-            color: 'primary.main',
-            fontWeight: 700,
-            fontSize: '0.85rem',
-          }}
-        >
-          {user!.name.charAt(0).toUpperCase()}
-        </Avatar>
-      </IconButton>
-      <Menu
-        anchorEl={anchorEl}
-        open={!!anchorEl}
-        onClose={() => setAnchorEl(null)}
-        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-        slotProps={{ paper: { sx: { mt: 1, borderRadius: 3, minWidth: 200 } } }}
-      >
-        <Box sx={{ px: 2, py: 1.5 }}>
-          <Typography variant="subtitle2" fontWeight={700}>{user!.name}</Typography>
-          <Typography variant="caption" color="text.secondary">{user!.email}</Typography>
-        </Box>
-        <Divider />
-        <MenuItem
-          onClick={() => { logout(); setAnchorEl(null) }}
-          sx={{ color: 'error.main', mt: 0.5 }}
-        >
-          <ListItemIcon><LogoutIcon fontSize="small" sx={{ color: 'error.main' }} /></ListItemIcon>
-          Sign Out
-        </MenuItem>
-      </Menu>
-    </>
-  )
-}
-
 function RootLayout() {
   const { t } = useTranslation()
   const { mode, toggleTheme } = useThemeMode()
   const cart = useCart()
-  const theme = useTheme()
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const isAuthPage = pathname === '/login' || pathname === '/register'
 
@@ -172,28 +50,7 @@ function RootLayout() {
             </Box>
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <IconButton
-                component={Link}
-                to="/cart"
-                sx={{
-                  color: 'text.secondary',
-                  '&:hover': { bgcolor: alpha(theme.palette.secondary.main, 0.08) },
-                }}
-              >
-                <Badge
-                  badgeContent={cart.totalItems}
-                  sx={{
-                    '& .MuiBadge-badge': {
-                      bgcolor: 'secondary.main',
-                      color: 'white',
-                      fontWeight: 700,
-                      fontSize: '0.7rem',
-                    },
-                  }}
-                >
-                  <ShoppingCartOutlinedIcon />
-                </Badge>
-              </IconButton>
+              <CartButton totalItems={cart.totalItems} />
               <ThemeToggle mode={mode} onToggle={toggleTheme} />
               <LanguageSwitcher />
               <UserMenu />
