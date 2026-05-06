@@ -17,5 +17,7 @@
         "./@cds-models/*"
       ]
     }
-  }
+  },
+  "include": ["server.ts", "srv/**/*.ts", "scripts/**/*.ts", "@cds-models/**/*.ts"],
+  "exclude": ["node_modules", "gen", "app", "**/dist"]
 }

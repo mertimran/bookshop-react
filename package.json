@@ -2,6 +2,7 @@
   "name": "bookshop",
   "version": "1.0.0",
   "dependencies": {
+    "@cap-js/hana": "^2",
     "@sap/cds": "^9",
     "@sap/xssec": "^4"
   },
@@ -22,7 +23,10 @@
     "dev:shop": "npm run dev --workspace=app/shop",
     "dev:admin": "npm run dev --workspace=app/admin",
     "build:shop": "npm run build --workspace=app/shop",
-    "build:admin": "npm run build --workspace=app/admin"
+    "build:admin": "npm run build --workspace=app/admin",
+    "build:cap": "cds build --production",
+    "build:mta": "mbt build -t ./mta_archives",
+    "deploy": "npm run build:mta && cf deploy mta_archives/bookshop_1.0.0.mtar"
   },
   "workspaces": [
     "app/shared",
@@ -39,11 +43,17 @@
       "auth": {
         "kind": "mocked",
         "users": {
-          "admin": { "password": "admin", "roles": ["admin"] }
+          "admin": {
+            "password": "admin",
+            "roles": [
+              "admin"
+            ]
+          }
         }
       },
       "[production]": {
-        "auth": "xsuaa"
+        "auth": "xsuaa",
+        "db": "hana"
       }
     }
   }

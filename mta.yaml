@@ -26,6 +26,7 @@ modules:
           srv-url: ${default-url}
     requires:
       - name: bookshop-auth
+      - name: bookshop-db
 
   - name: bookshop-app-deployer
     type: com.sap.application.content
@@ -36,10 +37,6 @@ modules:
         - name: bookshopadmin
           artifacts:
             - admin.zip
-          target-path: app/
-        - name: bookshopshared
-          artifacts:
-            - shared.zip
           target-path: app/
         - name: bookshopshop
           artifacts:
@@ -69,17 +66,6 @@ modules:
         - npm run build
       supported-platforms:
         []
-  - name: bookshopshared
-    type: html5
-    path: app/shared
-    build-parameters:
-      build-result: dist
-      builder: custom
-      commands:
-        - npm ci
-        - npm run build
-      supported-platforms:
-        []
   - name: bookshopshop
     type: html5
     path: app/shop
@@ -91,6 +77,14 @@ modules:
         - npm run build
       supported-platforms:
         []
+
+  - name: bookshop-db-deployer
+    type: hdb
+    path: gen/db
+    parameters:
+      buildpack: nodejs_buildpack
+    requires:
+      - name: bookshop-db
 
 resources:
   - name: bookshop-app-front
@@ -116,3 +110,8 @@ resources:
             description: 'generated'
             role-template-references:
               - '$XSAPPNAME.admin'
+  - name: bookshop-db
+    type: com.sap.xs.hdi-container
+    parameters:
+      service: hana
+      service-plan: hdi-shared
