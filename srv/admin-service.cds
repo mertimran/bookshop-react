@@ -10,6 +10,8 @@ service AdminService {
   entity Publishers as projection on db.Publishers;
   entity Orders as projection on db.Orders;
   entity OrderItems as projection on db.OrderItems;
+  entity OrderStatusEvents as projection on db.OrderStatusEvents;
+  entity Shipments as projection on db.Shipments;
 
   action confirmOrder(orderID : UUID) returns Orders;
   action shipOrder(orderID : UUID)    returns Orders;
