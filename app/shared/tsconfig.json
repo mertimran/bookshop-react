@@ -8,11 +8,10 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "declaration": true,
-    "declarationMap": true,
-    "composite": true,
-    "outDir": "./dist",
-    "rootDir": "./src"
+    "noEmit": true,
+    "paths": {
+      "#cds-models/*": ["../../@cds-models/*"]
+    }
   },
-  "include": ["src"]
+  "include": ["src", "../../@cds-models/**/*.ts"]
 }

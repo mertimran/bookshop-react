@@ -1,84 +1,41 @@
-export interface Book {
-  ID: string
-  title: string
-  description: string
-  isbn: string
-  price: number
-  currency_code: string
-  stock: number
-  publishedDate: string
-  coverImageUrl: string | null
-  rating: number
-  authorName?: string
-  author?: Author
-  publisher?: Publisher
-  genres?: BookGenre[]
-  createdAt?: string
-  modifiedAt?: string
+import {
+  Book as CdsBook,
+  Author as CdsAuthor,
+  Genre,
+  Publisher,
+  Order,
+  OrderItem,
+  OrderStatusEvent,
+  Review,
+  Shipment,
+  Books,
+} from '#cds-models/CatalogService'
+import { getAuthHeader } from '../auth'
+
+// cds-typer scopes `genre: Association to Genres` (declared in Books.Genres)
+// to the local `Books.Genre` namespace member, which has no `name` field.
+// Fix it to point at the top-level Genre entity.
+export type BookGenre = Omit<InstanceType<typeof Books.Genre>, 'genre'> & {
+  genre?: Genre | null
 }
 
-export interface Author {
-  ID: string
-  name: string
-  biography: string
-  dateOfBirth: string
-  books?: Book[]
+// cds-typer encodes Date as a template literal like `${n}${n}${n}${n}-...`,
+// which TS won't narrow plain strings to. Loosen to string for form inputs.
+export type Book = Omit<CdsBook, 'genres' | 'publishedDate'> & {
+  genres?: BookGenre[] | null
+  publishedDate?: string | null
 }
 
-export interface Genre {
-  ID: number
-  name: string
-  descr: string
+export type Author = Omit<CdsAuthor, 'dateOfBirth'> & {
+  dateOfBirth?: string | null
 }
 
-export interface BookGenre {
-  ID: string
-  genre?: Genre
-}
-
-export interface Publisher {
-  ID: string
-  name: string
-  address: string
-  website: string
-}
-
-export interface Order {
-  ID: string
-  orderNo: string
-  orderDate: string
-  status: 'draft' | 'submitted' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled'
-  totalAmount: number
-  currency_code: string
-  items?: OrderItem[]
-  createdAt?: string
-  modifiedAt?: string
-}
-
-export interface OrderItem {
-  ID: string
-  book?: Book
-  quantity: number
-  unitPrice: number
-  amount: number
-}
-
-export interface Review {
-  ID: string
-  book_ID: string
-  reviewer: string
-  rating: number
-  title: string
-  comment: string
-  createdAt?: string
-}
+export type { Genre, Publisher, Order, OrderItem, OrderStatusEvent, Review, Shipment }
 
 export interface ODataResponse<T> {
   value: T[]
   '@odata.count'?: number
 }
-
-import { getAuthHeader } from '../auth'
 
 const BASE_CATALOG = '/api/catalog'
 const BASE_ADMIN = '/api/admin'
@@ -136,8 +93,18 @@ export const catalogApi = {
       method: 'POST',
       body: JSON.stringify({ orderID }),
     }),
+  seedDemoOrder: () =>
+    fetchJson<Order>(`${BASE_CATALOG}/seedDemoOrder`, { method: 'POST', body: '{}' }),
   getOrders: (params = '') =>
     fetchJson<ODataResponse<Order>>(`${BASE_CATALOG}/Orders${params ? '?' + params : ''}`),
+  getOrder: (id: string) =>
+    fetchJson<Order>(
+      `${BASE_CATALOG}/Orders(${id})?$expand=items($expand=book),statusEvents,shipment`,
+    ),
+  getShipmentForOrder: (orderID: string) =>
+    fetchJson<ODataResponse<Shipment>>(
+      `${BASE_CATALOG}/Shipments?$filter=order_ID eq ${orderID}&$top=1`,
+    ).then((r) => r.value[0] ?? null),
   getReviews: (params = '') =>
     fetchJson<ODataResponse<Review>>(`${BASE_CATALOG}/Reviews${params ? '?' + params : ''}`),
   addReview: (review: Pick<Review, 'book_ID' | 'reviewer' | 'rating' | 'title' | 'comment'>) =>
@@ -161,7 +128,9 @@ export const adminApi = {
   getOrders: (params = '') =>
     fetchJson<ODataResponse<Order>>(`${BASE_ADMIN}/Orders${params ? '?' + params : ''}`),
   getOrder: (id: string) =>
-    fetchJson<Order>(`${BASE_ADMIN}/Orders(${id})?$expand=items($expand=book)`),
+    fetchJson<Order>(`${BASE_ADMIN}/Orders(${id})?$expand=items($expand=book),statusEvents,shipment`),
+  getShipments: (params = '') =>
+    fetchJson<ODataResponse<Shipment>>(`${BASE_ADMIN}/Shipments${params ? '?' + params : ''}`),
   confirmOrder: (orderID: string) =>
     fetchJson<Order>(`${BASE_ADMIN}/confirmOrder`, { method: 'POST', body: JSON.stringify({ orderID }) }),
   shipOrder: (orderID: string) =>

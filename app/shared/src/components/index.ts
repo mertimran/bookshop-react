@@ -1,2 +1,6 @@
 export { LanguageSwitcher } from './LanguageSwitcher'
 export { ThemeToggle } from './ThemeToggle'
+export { BookCover, gradientFor } from './BookCover'
+export { StatusTimeline } from './StatusTimeline'
+export { ShipmentMap } from './ShipmentMap'
+export type { ShipmentForMap } from './ShipmentMap'

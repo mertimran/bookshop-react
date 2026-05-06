@@ -3,8 +3,11 @@ import { initReactI18next } from 'react-i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
 import HttpBackend from 'i18next-http-backend'
 
+let initStarted = false
+
 export function initI18n(ns: string[] = ['common']) {
-  if (i18n.isInitialized) return i18n
+  if (initStarted) return i18n
+  initStarted = true
 
   i18n
     .use(HttpBackend)
