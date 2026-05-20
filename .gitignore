@@ -2,6 +2,7 @@ node_modules/
 target/
 _out/
 gen/
+dist/
 
 .cdsrc-private.json
 default-*.json
@@ -12,8 +13,16 @@ mta_archives/
 *_mta_build_tmp
 *.mtar
 
-# Other
+# IDE / tooling
 .DS_Store
+.vscode/
+.tanstack/
+
+# Build artifacts
+*.tsbuildinfo
+
+# Scripts cache
+scripts/.cache/
 
 # @cap-js/cds-typer
 @cds-models
